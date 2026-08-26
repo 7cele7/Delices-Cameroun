@@ -22,7 +22,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: 'zulu'
-          java-version: '17'  # ← Changé de 11 à 17
+          java-version: '17'
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v2
@@ -37,10 +37,21 @@ jobs:
           cd yaounde-delices
           npm install
 
-      - name: Build APK with Capacitor
+      - name: Build React app
         run: |
           cd yaounde-delices
+          npm run build
+
+      - name: Setup Capacitor
+        run: |
+          cd yaounde-delices
+          npx cap init YaoundeDelices com.yaounde.delices
           npx cap add android
+          npx cap sync android
+
+      - name: Build APK
+        run: |
+          cd yaounde-delices
           npx cap copy android
           cd android
           chmod +x gradlew
