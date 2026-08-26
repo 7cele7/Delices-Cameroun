@@ -3,27 +3,33 @@ name: Build Android APK
 on:
   push:
     branches: [main, master]
-  pull_request:
-    branches: [main, master]
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./frontend   # ← REMPLACEZ "frontend" par votre dossier
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Extract ZIP archive
+        run: |
+          sudo apt-get update && sudo apt-get install -y unzip
+          unzip yaounde-delices-mobile.zip
+          ls -la
+
+      - name: Find project directory
+        id: find-project
+        run: |
+          PROJECT_DIR=$(find . -maxdepth 2 -name "package.json" -not -path "./.github/*" | head -1 | xargs dirname)
+          echo "PROJECT_DIR=$PROJECT_DIR" >> $GITHUB_OUTPUT
+          echo "Found project at: $PROJECT_DIR"
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: ./frontend/package-lock.json   # ← Adapter ici aussi
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -35,21 +41,23 @@ jobs:
         uses: android-actions/setup-android@v3
 
       - name: Install dependencies
+        working-directory: ${{ steps.find-project.outputs.PROJECT_DIR }}
         run: npm install
 
       - name: Build React app
+        working-directory: ${{ steps.find-project.outputs.PROJECT_DIR }}
         run: npm run build
 
-      - name: Setup Capacitor
+      - name: Sync Capacitor
+        working-directory: ${{ steps.find-project.outputs.PROJECT_DIR }}
         run: npx cap sync android
 
       - name: Build APK
-        run: |
-          cd android
-          ./gradlew assembleDebug
+        working-directory: ${{ steps.find-project.outputs.PROJECT_DIR }}/android
+        run: ./gradlew assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: app-debug
-          path: ./frontend/android/app/build/outputs/apk/debug/app-debug.apk   # ← Adapter le chemin
+          path: ${{ steps.find-project.outputs.PROJECT_DIR }}/android/app/build/outputs/apk/debug/app-debug.apk
