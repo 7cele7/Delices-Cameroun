@@ -27,31 +27,20 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v2
 
-      - name: Unzip project
-        run: |
-          unzip -o yaounde-delices-mobile.zip -d .
-          ls -la
-
       - name: Install dependencies
-        run: |
-          cd yaounde-delices
-          npm install
+        run: npm install
 
       - name: Build React app
-        run: |
-          cd yaounde-delices
-          npm run build
+        run: npm run build
 
       - name: Setup Capacitor
         run: |
-          cd yaounde-delices
           npx cap init YaoundeDelices com.yaounde.delices
           npx cap add android
           npx cap sync android
 
       - name: Build APK
         run: |
-          cd yaounde-delices
           npx cap copy android
           cd android
           chmod +x gradlew
@@ -61,4 +50,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: app-debug
-          path: yaounde-delices/android/app/build/outputs/apk/debug/app-debug.apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
