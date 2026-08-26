@@ -28,7 +28,7 @@ jobs:
         uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
-          java-version: '21'   # ← CHANGÉ : 17 → 21
+          java-version: '21'
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
@@ -41,6 +41,10 @@ jobs:
           npm install @capacitor/core @capacitor/cli @capacitor/android
           npx cap init "Delices Cameroun" com.delices.cameroun --web-dir dist
           npx cap add android
+
+      - name: Fix Kotlin dependency conflicts
+        run: |
+          sed -i '0,/dependencies {/s//configurations.all {\n    resolutionStrategy.eachDependency { details ->\n        if (details.requested.group == "org.jetbrains.kotlin") {\n            details.useVersion "1.8.22"\n        }\n    }\n}\ndependencies {/' android/app/build.gradle
 
       - name: Build React app
         run: npm run build
