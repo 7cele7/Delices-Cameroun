@@ -22,7 +22,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: 'zulu'
-          java-version: '11'
+          java-version: '17'  # ← Changé de 11 à 17
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v2
@@ -47,7 +47,7 @@ jobs:
           ./gradlew assembleDebug
 
       - name: Upload APK
-        uses: actions/upload-artifact@v4  # ← Changé de v3 à v4
+        uses: actions/upload-artifact@v4
         with:
           name: app-debug
           path: yaounde-delices/android/app/build/outputs/apk/debug/app-debug.apk
