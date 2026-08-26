@@ -17,20 +17,8 @@ jobs:
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq unzip
           unzip -q yaounde-delices-mobile.zip
-          echo "=== Structure extraite ==="
+          echo "=== Fichiers extraits ==="
           ls -la
-          find . -maxdepth 3 -type f \( -name "package.json" -o -name "capacitor.config.*" \) | head -20
-
-      - name: Find project directory
-        id: find-project
-        run: |
-          CAP_DIR=$(find . -maxdepth 3 -name "capacitor.config.*" -not -path "./.github/*" | head -1 | xargs dirname)
-          if [ -z "$CAP_DIR" ]; then
-            CAP_DIR=$(find . -maxdepth 2 -name "package.json" -not -path "./.github/*" | head -1 | xargs dirname)
-          fi
-          echo "PROJECT_DIR=$CAP_DIR" >> $GITHUB_OUTPUT
-          echo "Project found at: $CAP_DIR"
-          ls -la "$CAP_DIR"
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -46,31 +34,24 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install dependencies
-        working-directory: ${{ steps.find-project.outputs.PROJECT_DIR }}
+      - name: Install project dependencies
         run: npm install
 
+      - name: Install Capacitor & Android platform
+        run: |
+          npm install @capacitor/core @capacitor/cli @capacitor/android
+          npx cap init "Delices Cameroun" com.delices.cameroun --web-dir dist
+          npx cap add android
+
       - name: Build React app
-        working-directory: ${{ steps.find-project.outputs.PROJECT_DIR }}
         run: npm run build
 
-      - name: Add Android platform (if missing)
-        working-directory: ${{ steps.find-project.outputs.PROJECT_DIR }}
-        run: |
-          if [ ! -d "android" ]; then
-            echo "Android platform not found, adding it..."
-            npx cap add android
-          else
-            echo "Android platform already exists"
-          fi
-
       - name: Sync Capacitor
-        working-directory: ${{ steps.find-project.outputs.PROJECT_DIR }}
         run: npx cap sync android
 
-      - name: Fix permissions & Build APK
-        working-directory: ${{ steps.find-project.outputs.PROJECT_DIR }}/android
+      - name: Build APK
         run: |
+          cd android
           chmod +x gradlew
           ./gradlew assembleDebug
 
@@ -78,4 +59,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: app-debug
-          path: ${{ steps.find-project.outputs.PROJECT_DIR }}/android/app/build/outputs/apk/debug/app-debug.apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
